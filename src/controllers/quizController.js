@@ -33,32 +33,24 @@ export async function getQuizzes(req, res) {
 
 // Submit quiz answers, calculate score, and add to leaderboard
 export async function submitQuiz(req, res) {
+  const { user, score } = req.body; // Include 'user' in the request body
+  const { id } = req.params;
+  console.log('Quiz ID:', id);
+  console.log(`User: ${user}, Score: ${score}`);
   try {
-    const { quizId, answers, user } = req.body; // Include 'user' in the request body
-
     // Find the quiz by ID
-    const quiz = await Quiz.findById(quizId);
-
+    const quiz = await Quiz.findById(id);
     // If the quiz is not found, return an error
     if (!quiz) {
       return res.status(404).json({ message: "Quiz not found" });
     }
-
-    let score = 0;
-
-    // Compare user's answers with the correct answers and calculate the score
-    quiz.questions.forEach((question, index) => {
-      if (answers[index] === question.correctAnswer) {
-        score++; // Increment score for correct answer
-      }
-    });
 
     // Add the user's score to the leaderboard
     quiz.scores.push({ user, score });
     await quiz.save();
 
     // Return the score and the total number of questions
-    res.status(200).json({ score, total: quiz.questions.length, message: "Score submitted successfully" });
+    res.status(200).json({ score : quiz.scores.score, total: quiz.questions.length, message: "Score submitted successfully" });
   } catch (error) {
     // Handle errors
     console.error("Error submitting quiz:", error);
@@ -69,11 +61,10 @@ export async function submitQuiz(req, res) {
 // Get leaderboard for a specific quiz
 export async function getLeaderboard(req, res) {
   try {
-    const quizId = req.params.id; // Get quiz ID from the route params
+    const id = req.params; // Get quiz ID from the route params
     
     // Find the quiz by its ID
-    const quiz = await Quiz.findById(quizId);
-
+    const quiz = await Quiz.findById(id);
     if (!quiz) {
       return res.status(404).json({ message: "Quiz not found" });
     }
